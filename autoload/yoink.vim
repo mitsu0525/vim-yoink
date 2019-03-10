@@ -14,6 +14,7 @@ let s:saveHistoryToShada = get(g:, 'yoinkSavePersistently', 0)
 let s:autoFormat = get(g:, 'yoinkAutoFormatPaste', 0)
 let s:lastSwapStartChangedtick = -1
 let s:lastSwapChangedtick = -1
+let s:isActive = 0
 let s:isSwapping = 0
 let s:offsetSum = 0
 let s:focusLostInfo = {}
@@ -131,6 +132,7 @@ function! yoink#adjustLastChangeIfNecessary()
 endfunction
 
 function! yoink#paste(...)
+    let s:isActive = 1
     let previousPosition = getpos('.')
     exec "normal! \"" . s:currentPasteRegister . s:cnt . s:currentPasteType
 
@@ -150,6 +152,7 @@ function! yoink#paste(...)
 endfunction
 
 function! s:postSwapCursorMove2()
+    let s:isActive = 0
     if !s:isSwapping
         " Should never happen
         throw 'Unknown Error detected during yoink paste'
@@ -391,6 +394,10 @@ function! yoink#getYankInfoForReg(reg)
     return { 'text': getreg(a:reg), 'type': getregtype(a:reg) }
 endfunction
 
+function! yoink#isActive()
+    return s:isActive
+endfunction
+
 function! yoink#isSwapping()
     return s:isSwapping
 endfunction
@@ -488,7 +495,7 @@ function! yoink#onYank(ev) abort
             " above
             let entry = { 'text': getreg(a:ev.regname), 'type': a:ev.regtype }
 
-            " We add an offset for named registers so that the default register is always at 
+            " We add an offset for named registers so that the default register is always at
             " index 0 in the yank history
             call s:addToHistory(entry, isDefaultRegister ? 0 : 1)
         endif
@@ -505,4 +512,3 @@ endfunction
 augroup YoinkSwapPasteMoveDetect
     autocmd!
 augroup END
-
